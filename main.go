@@ -11,11 +11,11 @@ import (
 var portFrom, portTo int
 
 func main() {
-	portFrom = 1024
-	portTo = 3000
+	portFrom = 1
+	portTo = 1024
 	fmt.Println("Sync VS Async")
-	checkAsync("tcp", "localhost")
-	checkSync("tcp", "localhost")
+	checkAsync("udp", "localhost")
+	checkSync("udp", "localhost")
 }
 
 func checkAsync(protocol, hostname string) {
@@ -29,14 +29,14 @@ func checkAsync(protocol, hostname string) {
 		go scanAsync(protocol, hostname, i, &result, &m, &wg)
 	}
 	wg.Wait()
-	fmt.Println("Async took ", time.Since(start), " found ", len(result))
+	fmt.Println("Async took ", time.Since(start), " found open ports: ", len(result))
 }
 
 func scanAsync(protocol, hostname string, port int, result *[]int, m *sync.Mutex, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	err := scanner.Scan(protocol, hostname, port)
-	if err != nil {
+	if err == nil {
 		m.Lock()
 		*result = append(*result, port)
 		m.Unlock()
@@ -45,8 +45,12 @@ func scanAsync(protocol, hostname string, port int, result *[]int, m *sync.Mutex
 
 func checkSync(protocol, hostname string) {
 	start := time.Now()
+	var result []int
 	for i := portFrom; i < portTo; i++ {
-		scanner.Scan(protocol, hostname, i)
+		err := scanner.Scan(protocol, hostname, i)
+		if err == nil {
+			result = append(result, i)
+		}
 	}
-	fmt.Println("Sync took ", time.Since(start))
+	fmt.Println("Sync took ", time.Since(start), " found open ports: ", len(result))
 }
