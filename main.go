@@ -26,7 +26,10 @@ func checkAsync(protocol, hostname string) {
 	var m sync.Mutex
 	for i := portFrom; i < portTo; i++ {
 		wg.Add(1)
-		go scanAsync(protocol, hostname, i, &result, &m, &wg)
+		//go scanAsync(protocol, hostname, i, &result, &m, &wg)
+		go func(i int) {
+			scanAsync(protocol, hostname, i, &result, &m, &wg)
+		}(i)
 	}
 	wg.Wait()
 	fmt.Println("Async took ", time.Since(start), " found open ports: ", len(result))
